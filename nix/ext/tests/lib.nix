@@ -115,6 +115,9 @@ let
       ${
         if majorVersion == "orioledb-17" then
           ''
+            # OrioleDB: remove preload and privileged entries for extensions not in orioledb build
+            sed -i "s/ pg_tokenizer,//g; s/ vchord_bm25,//g; s/ vchord,//g; s/, vchord'/'/g" $out/postgresql.conf
+            sed -i "s/ pg_tokenizer,//g; s/ vchord_bm25,//g; s/ vchord,//g; s/, vchord'/'/g" $out/supautils.conf
             # OrioleDB: also remove pgjwt from supautils privileged_extensions
             sed -i 's/ pgjwt,//g;' $out/supautils.conf
             # OrioleDB: append orioledb to shared_preload_libraries

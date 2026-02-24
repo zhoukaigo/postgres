@@ -1,0 +1,12 @@
+create extension if not exists pg_tokenizer cascade;
+select extversion from pg_extension where extname = 'pg_tokenizer';
+ extversion 
+------------
+ 0.1.1
+(1 row)
+
+select current_setting('search_path') like '%tokenizer_catalog%' as has_tokenizer_catalog;
+ has_tokenizer_catalog 
+-----------------------
+ t
+(1 row)

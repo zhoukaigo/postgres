@@ -1,0 +1,14 @@
+create extension if not exists pg_tokenizer cascade;
+NOTICE:  extension "pg_tokenizer" already exists, skipping
+create extension if not exists vchord_bm25 cascade;
+select extversion from pg_extension where extname = 'vchord_bm25';
+ extversion 
+------------
+ 0.2.2
+(1 row)
+
+select current_setting('search_path') like '%bm25_catalog%' as has_bm25_catalog;
+ has_bm25_catalog 
+------------------
+ t
+(1 row)

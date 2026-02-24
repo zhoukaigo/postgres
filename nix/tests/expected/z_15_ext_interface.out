@@ -31,9 +31,12 @@ order by
 -----------------
  pg_cron
  pgjwt
+ pg_tokenizer
  tsm_system_time
+ vchord
+ vchord_bm25
  wal2json
-(4 rows)
+(7 rows)
 
 /*
 
@@ -6501,4 +6504,3 @@ order by
  wrappers                     | public                   | wrappers_fdw_stats                               | rows_out
  wrappers                     | public                   | wrappers_fdw_stats                               | updated_at
 (1168 rows)
-

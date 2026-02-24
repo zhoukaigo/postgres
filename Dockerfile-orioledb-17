@@ -148,10 +148,11 @@ RUN sed -i \
     echo "vault.getkey_script= '/usr/lib/postgresql/bin/pgsodium_getkey.sh'" >> /etc/postgresql/postgresql.conf && \
     chown -R postgres:postgres /etc/postgresql-custom
 
-# Remove timescaledb, plv8, postgis, pgrouting references (not available in orioledb build)
+# Remove references to extensions not available in orioledb build
 RUN sed -i 's/ timescaledb,//g;' "/etc/postgresql/postgresql.conf" && \
     sed -i 's/db_user_namespace = off/#db_user_namespace = off/g;' "/etc/postgresql/postgresql.conf" && \
-    sed -i 's/ timescaledb,//g; s/ plv8,//g; s/ postgis,//g; s/ pgrouting,//g' "/etc/postgresql-custom/supautils.conf"
+    sed -i "s/ pg_tokenizer,//g; s/ vchord_bm25,//g; s/ vchord,//g; s/, vchord'/'/g" "/etc/postgresql/postgresql.conf" && \
+    sed -i "s/ timescaledb,//g; s/ plv8,//g; s/ postgis,//g; s/ pgrouting,//g; s/ pg_tokenizer,//g; s/ vchord_bm25,//g; s/ vchord,//g; s/, vchord'/'/g" "/etc/postgresql-custom/supautils.conf"
 
 # OrioleDB configuration
 RUN sed -i 's/\(shared_preload_libraries.*\)'\''\(.*\)$/\1, orioledb'\''\2/' "/etc/postgresql/postgresql.conf" && \

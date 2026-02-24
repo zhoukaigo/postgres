@@ -252,8 +252,11 @@ orioledb_config_items() {
         # Remove items from postgresql.conf
         echo "non-macos oriole conf"
         sed -i 's/ timescaledb,//g;' "$DATDIR/postgresql.conf"
+        sed -i 's/ pg_tokenizer,//g; s/ vchord_bm25,//g; s/ vchord,//g;' "$DATDIR/postgresql.conf"
+        sed -i "s/, vchord'/'/g; s/, vchord$//g" "$DATDIR/postgresql.conf"
         sed -i 's/db_user_namespace = off/#db_user_namespace = off/g;' "$DATDIR/postgresql.conf"
-        sed -i 's/ timescaledb,//g; s/ plv8,//g; s/ pgjwt,//g;' "$DATDIR/supautils.conf"
+        sed -i 's/ timescaledb,//g; s/ plv8,//g; s/ pgjwt,//g; s/ pg_tokenizer,//g; s/ vchord_bm25,//g; s/ vchord,//g;' "$DATDIR/supautils.conf"
+        sed -i "s/, vchord'/'/g; s/, vchord$//g" "$DATDIR/supautils.conf"
         sed -i 's/\(shared_preload_libraries.*\)'\''\(.*\)$/\1, orioledb'\''\2/' "$DATDIR/postgresql.conf"
         echo "default_table_access_method = 'orioledb'" >> "$DATDIR/postgresql.conf"
     elif [[ "$1" = "orioledb-17" && "$CURRENT_SYSTEM" = "aarch64-darwin" ]]; then
@@ -263,11 +266,19 @@ orioledb_config_items() {
         
         # Use perl instead of sed for macOS
         perl -pi -e 's/ timescaledb,//g' "$DATDIR/postgresql.conf"
+        perl -pi -e 's/ pg_tokenizer,//g' "$DATDIR/postgresql.conf"
+        perl -pi -e 's/ vchord_bm25,//g' "$DATDIR/postgresql.conf"
+        perl -pi -e 's/ vchord,//g' "$DATDIR/postgresql.conf"
+        perl -pi -e "s/, vchord'/'/g; s/, vchord$//g" "$DATDIR/postgresql.conf"
         perl -pi -e 's/db_user_namespace = off/#db_user_namespace = off/g' "$DATDIR/postgresql.conf"
         
         perl -pi -e 's/ timescaledb,//g' "$DATDIR/supautils.conf"
         perl -pi -e 's/ plv8,//g' "$DATDIR/supautils.conf"
         perl -pi -e 's/ pgjwt,//g' "$DATDIR/supautils.conf"
+        perl -pi -e 's/ pg_tokenizer,//g' "$DATDIR/supautils.conf"
+        perl -pi -e 's/ vchord_bm25,//g' "$DATDIR/supautils.conf"
+        perl -pi -e 's/ vchord,//g' "$DATDIR/supautils.conf"
+        perl -pi -e "s/, vchord'/'/g; s/, vchord$//g" "$DATDIR/supautils.conf"
         perl -pi -e 's/(shared_preload_libraries\s*=\s*'\''.*?)'\''/\1, orioledb'\''/' "$DATDIR/postgresql.conf"
         
         echo "default_table_access_method = 'orioledb'" >> "$DATDIR/postgresql.conf"

@@ -132,6 +132,9 @@
                   "pg_tle"
                   "plan_filter"
                   "supabase_vault"
+                  "pg_tokenizer"
+                  "vchord_bm25"
+                  "vchord"
                   "supautils"
                 )
 
@@ -252,8 +255,11 @@
                 "roles" # includes roles/schemas from extensions not in CLI (pgtle, pgmq, repack, topology)
                 # Version-specific extension tests
                 "z_17_ext_interface"
+                "z_17_pg_tokenizer"
                 "z_17_pg_stat_monitor"
                 "z_17_pgvector"
+                "z_17_vchord"
+                "z_17_vchord_bm25"
                 "z_17_rum"
                 "z_17_roles" # version-specific roles test, includes pgtle_admin
               ];

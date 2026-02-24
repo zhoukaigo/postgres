@@ -204,6 +204,5 @@ order by
 show search_path;
             search_path            
 -----------------------------------
- "$user", public, auth, extensions
+ "$user", public, auth, extensions, tokenizer_catalog, bm25_catalog
 (1 row)
-

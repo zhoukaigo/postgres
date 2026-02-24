@@ -24,10 +24,13 @@ order by
 ------------------------
  pg_cron
  pgjwt
+ pg_tokenizer
  postgis_tiger_geocoder
  tsm_system_time
+ vchord
+ vchord_bm25
  wal2json
-(5 rows)
+(8 rows)
 
 /*
 
@@ -5426,4 +5429,3 @@ order by
  wrappers                     | public      | wrappers_fdw_stats      | rows_out
  wrappers                     | public      | wrappers_fdw_stats      | updated_at
 (449 rows)
-

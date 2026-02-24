@@ -44,6 +44,9 @@
         ../ext/pg_jsonschema
         ../ext/pg_partman.nix
         ../ext/pgvector.nix
+        ../ext/vchord
+        ../ext/pg_tokenizer
+        ../ext/vchord_bm25
         ../ext/vault.nix
         ../ext/hypopg.nix
         ../ext/pg_tle.nix
@@ -56,11 +59,22 @@
       # plus the orioledb option
       #we're not using timescaledb or plv8 in the orioledb-17 version or pg 17 of supabase extensions
       orioleFilteredExtensions = builtins.filter (
-        x: x != ../ext/timescaledb.nix && x != ../ext/timescaledb-2.9.1.nix && x != ../ext/plv8
+        x:
+        x != ../ext/timescaledb.nix
+        && x != ../ext/timescaledb-2.9.1.nix
+        && x != ../ext/plv8
+        && x != ../ext/vchord
+        && x != ../ext/pg_tokenizer
+        && x != ../ext/vchord_bm25
       ) ourExtensions;
 
       orioledbExtensions = orioleFilteredExtensions ++ [ ../ext/orioledb.nix ];
-      dbExtensions17 = orioleFilteredExtensions;
+      dbExtensions17 = builtins.filter (
+        x:
+        x != ../ext/timescaledb.nix
+        && x != ../ext/timescaledb-2.9.1.nix
+        && x != ../ext/plv8
+      ) ourExtensions;
 
       # CLI extensions - minimal set for Supabase CLI with migration support
       cliExtensions = [

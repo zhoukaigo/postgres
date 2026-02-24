@@ -588,6 +588,40 @@
       "hash": "sha256-JsZV+I4eRMypXTjGmjCtMBXDVpqTIPHQa28ogXncE/Q="
     }
   },
+  "vchord": {
+    "1.0.0": {
+      "postgresql": [
+        "15",
+        "17"
+      ],
+      "hash": "sha256-+BOuiinbKPZZaDl9aYsIoZPgvLZ4FA6Rb4/W+lAz4so=",
+      "revision": "1.0.0",
+      "pgrx": "0.16.1",
+      "rust": "1.88.0"
+    }
+  },
+  "vchord_bm25": {
+    "0.2.2": {
+      "postgresql": [
+        "15",
+        "17"
+      ],
+      "hash": "sha256-ayGKHiUIwXHOJCAgmzEOtYrP+OQrphh5hYrFXt5bJdc=",
+      "pgrx": "0.16.1",
+      "rust": "1.88.0"
+    }
+  },
+  "pg_tokenizer": {
+    "0.1.1": {
+      "postgresql": [
+        "15",
+        "17"
+      ],
+      "hash": "sha256-Okwb5VBretu5DP+CPX6pbcmWWLyUZUQQyQR3YWbuU08=",
+      "pgrx": "0.16.1",
+      "rust": "1.88.0"
+    }
+  },
   "wrappers": {
     "0.3.0": {
       "postgresql": [

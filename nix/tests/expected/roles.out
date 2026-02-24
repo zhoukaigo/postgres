@@ -82,9 +82,9 @@ order by rolname;
  pgsodium_keyiduser         | 
  pgsodium_keymaker          | 
  pgtle_admin                | 
- postgres                   | {"search_path=\"\\$user\", public, extensions"}
+ postgres                   | {"search_path=\"\\$user\", public, extensions, tokenizer_catalog, bm25_catalog"}
  service_role               | 
- supabase_admin             | {"search_path=\"$user\", public, auth, extensions",log_statement=none}
+ supabase_admin             | {"search_path=\"$user\", public, auth, extensions, tokenizer_catalog, bm25_catalog",log_statement=none}
  supabase_auth_admin        | {search_path=auth,idle_in_transaction_session_timeout=60000,log_statement=none}
  supabase_etl_admin         | 
  supabase_functions_admin   | 

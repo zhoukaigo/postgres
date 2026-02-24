@@ -1,0 +1,15 @@
+create extension if not exists vector;
+NOTICE:  extension "vector" already exists, skipping
+create extension if not exists vchord cascade;
+select extversion from pg_extension where extname = 'vchord';
+ extversion 
+------------
+ 1.0.0
+(1 row)
+
+select amname from pg_am where amname in ('vchordg', 'vchordrq') order by amname;
+ amname  
+---------
+ vchordg
+ vchordrq
+(2 rows)

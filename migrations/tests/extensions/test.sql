@@ -29,3 +29,6 @@
 \ir 28-pgvector.sql
 \ir 29-pg_tle.sql
 \ir 30-pg_partman.sql
+\ir 31-vchord.sql
+\ir 32-pg_tokenizer.sql
+\ir 33-vchord_bm25.sql
