@@ -5,6 +5,10 @@
 # Stage 1: Nix builder
 ####################
 FROM alpine:3.21 AS nix-builder
+ARG TARGETARCH
+ARG VCHORD_VERSION=0.5.3
+ARG VCHORD_BM25_VERSION=0.2.2
+ARG PG_TOKENIZER_VERSION=0.1.1
 
 # Install dependencies for nix installer (coreutils for GNU cp, sudo for installer)
 RUN apk add --no-cache \
@@ -47,7 +51,49 @@ RUN nix profile add path:.#supabase-groonga && \
 RUN nix store gc
 
 ####################
-# Stage 2: Gosu builder
+# Stage 2: TensorChord extension builder (apt-based)
+####################
+FROM postgres:17-bookworm AS tensorchord-builder
+
+ARG VCHORD_VERSION=0.5.3
+ARG VCHORD_BM25_VERSION=0.2.2
+ARG PG_TOKENIZER_VERSION=0.1.1
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends wget ca-certificates; \
+    arch="$(dpkg --print-architecture)"; \
+    wget -O /tmp/vchord.deb "https://github.com/tensorchord/VectorChord/releases/download/${VCHORD_VERSION}/postgresql-17-vchord_${VCHORD_VERSION}-1_${arch}.deb"; \
+    wget -O /tmp/pg-tokenizer.deb "https://github.com/tensorchord/pg_tokenizer.rs/releases/download/${PG_TOKENIZER_VERSION}/postgresql-17-pg-tokenizer_${PG_TOKENIZER_VERSION}-1_${arch}.deb"; \
+    wget -O /tmp/vchord-bm25.deb "https://github.com/tensorchord/VectorChord-bm25/releases/download/${VCHORD_BM25_VERSION}/postgresql-17-vchord-bm25_${VCHORD_BM25_VERSION}-1_${arch}.deb"; \
+    apt-get install -y --no-install-recommends \
+      /tmp/vchord.deb \
+      /tmp/pg-tokenizer.deb \
+      /tmp/vchord-bm25.deb \
+      libstdc++6; \
+    mkdir -p /tmp/tensorchord-root/usr/lib/postgresql/lib \
+      /tmp/tensorchord-root/usr/share/postgresql/extension \
+      /tmp/tensorchord-root/opt/tensorchord/extension; \
+    cp -a /usr/lib/postgresql/17/lib/vchord.so /tmp/tensorchord-root/usr/lib/postgresql/lib/; \
+    cp -a /usr/lib/postgresql/17/lib/vchord_bm25.so /tmp/tensorchord-root/usr/lib/postgresql/lib/; \
+    cp -a /usr/lib/postgresql/17/lib/pg_tokenizer.so /tmp/tensorchord-root/usr/lib/postgresql/lib/; \
+    cp -a /usr/share/postgresql/17/extension/vchord* /tmp/tensorchord-root/usr/share/postgresql/extension/; \
+    cp -a /usr/share/postgresql/17/extension/vchord_bm25* /tmp/tensorchord-root/usr/share/postgresql/extension/; \
+    cp -a /usr/share/postgresql/17/extension/pg_tokenizer* /tmp/tensorchord-root/usr/share/postgresql/extension/; \
+    cp -a /usr/share/postgresql/17/extension/vchord* /tmp/tensorchord-root/opt/tensorchord/extension/; \
+    cp -a /usr/share/postgresql/17/extension/vchord_bm25* /tmp/tensorchord-root/opt/tensorchord/extension/; \
+    cp -a /usr/share/postgresql/17/extension/pg_tokenizer* /tmp/tensorchord-root/opt/tensorchord/extension/; \
+    for so in /usr/lib/postgresql/17/lib/vchord.so /usr/lib/postgresql/17/lib/vchord_bm25.so /usr/lib/postgresql/17/lib/pg_tokenizer.so; do \
+      ldd "$so" | awk '/=> \\//{print $3} /^\\/lib/{print $1}' | while read -r lib; do \
+        [ -f "$lib" ] || continue; \
+        mkdir -p "/tmp/tensorchord-root$(dirname "$lib")"; \
+        cp -a "$lib" "/tmp/tensorchord-root$lib"; \
+      done; \
+    done; \
+    rm -rf /tmp/*.deb /var/lib/apt/lists/*
+
+####################
+# Stage 3: Gosu builder
 ####################
 FROM alpine:3.21 AS gosu-builder
 
@@ -67,7 +113,7 @@ RUN curl -fsSL "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}
     chmod +x /usr/local/bin/gosu
 
 ####################
-# Stage 3: Final production image
+# Stage 4: Final production image
 ####################
 FROM alpine:3.21 AS production
 
@@ -98,8 +144,12 @@ COPY --from=nix-builder /tmp/groonga-plugins/plugins /usr/lib/groonga/plugins
 # Copy gosu
 COPY --from=gosu-builder /usr/local/bin/gosu /usr/local/bin/gosu
 
+# Copy apt-installed TensorChord extension files and runtime deps
+COPY --from=tensorchord-builder /tmp/tensorchord-root/ /
+
 # Setup PostgreSQL directories
 RUN mkdir -p /usr/lib/postgresql/bin \
+    /usr/lib/postgresql/lib \
     /usr/lib/postgresql/share/postgresql \
     /usr/share/postgresql \
     /var/lib/postgresql/data \
@@ -119,6 +169,15 @@ RUN for f in /nix/var/nix/profiles/default/bin/*; do \
 RUN ln -sf /nix/var/nix/profiles/default/share/postgresql/* /usr/lib/postgresql/share/postgresql/ 2>/dev/null || true && \
     ln -sf /nix/var/nix/profiles/default/share/postgresql/* /usr/share/postgresql/ 2>/dev/null || true && \
     ln -sf /usr/lib/postgresql/share/postgresql/timezonesets /usr/share/postgresql/timezonesets 2>/dev/null || true
+
+# Restore a writable extension directory and merge Nix + TensorChord control/sql files
+RUN set -eux; \
+    rm -f /usr/share/postgresql/extension /usr/lib/postgresql/share/postgresql/extension; \
+    mkdir -p /usr/share/postgresql/extension /usr/lib/postgresql/share/postgresql/extension; \
+    cp -a /nix/var/nix/profiles/default/share/postgresql/extension/. /usr/share/postgresql/extension/; \
+    cp -a /nix/var/nix/profiles/default/share/postgresql/extension/. /usr/lib/postgresql/share/postgresql/extension/; \
+    cp -a /opt/tensorchord/extension/. /usr/share/postgresql/extension/; \
+    cp -a /opt/tensorchord/extension/. /usr/lib/postgresql/share/postgresql/extension/
 
 # Set permissions
 RUN chown -R postgres:postgres /usr/lib/postgresql && \
@@ -152,6 +211,20 @@ RUN sed -i \
 RUN sed -i 's/ timescaledb,//g;' "/etc/postgresql/postgresql.conf" && \
     sed -i 's/db_user_namespace = off/#db_user_namespace = off/g;' "/etc/postgresql/postgresql.conf" && \
     sed -i 's/ timescaledb,//g; s/ plv8,//g' "/etc/postgresql-custom/supautils.conf"
+
+# Add TensorChord preload libraries and global search_path catalogs
+RUN set -eux; \
+    echo "dynamic_library_path = '\$libdir,/usr/lib/postgresql/lib'" >> /etc/postgresql/postgresql.conf; \
+    preload="$(sed -n "s/^shared_preload_libraries = '\(.*\)'.*/\1/p" /etc/postgresql/postgresql.conf)"; \
+    for lib in /usr/lib/postgresql/lib/vchord.so /usr/lib/postgresql/lib/pg_tokenizer.so /usr/lib/postgresql/lib/vchord_bm25.so; do \
+      if ! printf '%s\n' "${preload}" | tr ',' '\n' | sed 's/^ *//;s/ *$//' | grep -qx "${lib}"; then \
+        preload="${preload}, ${lib}"; \
+      fi; \
+    done; \
+    sed -i "s|^shared_preload_libraries = '.*'|shared_preload_libraries = '${preload}'|" /etc/postgresql/postgresql.conf; \
+    cat <<'EOF' >> /etc/postgresql/postgresql.conf
+search_path = '"$user", public, extensions, tokenizer_catalog, bm25_catalog'
+EOF
 
 # Include schema migrations
 COPY migrations/db /docker-entrypoint-initdb.d/
